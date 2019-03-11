@@ -24,5 +24,5 @@
 ## SEASON 4. 依存性の注入
 
 * [アプリケーションコンフィグの管理](dependency-injection/app-config.md)
-* [サードパーティSDKの抽象化](dependency-injection/sdoptisdkno.md)
+* [サードパーティSDKの抽象化](dependency-injection/external-sdk-abstraction.md)
 
