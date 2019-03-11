@@ -64,7 +64,7 @@ export class AppComponent {
 {% endcode-tabs-item %}
 {% endcode-tabs %}
 
-![&#x30E6;&#x30FC;&#x30B6;&#x30FC;&#x30EA;&#x30B9;&#x30C8;](../.gitbook/assets/image%20%285%29.png)
+![&#x30E6;&#x30FC;&#x30B6;&#x30FC;&#x30EA;&#x30B9;&#x30C8;](../.gitbook/assets/image%20%286%29.png)
 
 {% embed url="https://stackblitz.com/edit/angular-i8x98w?file=src%2Fapp%2Fapp.component.html" %}
 
