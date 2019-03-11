@@ -8,6 +8,8 @@
 
 [チュートリアル](https://angular.jp/tutorial)
 
+この本についてのフィードバックは Twitter の [\#AngularAfterTutorial](https://twitter.com/search?q=%23AngularAfterTutorial) ハッシュタグを使ってください。
+
 ### 著者情報
 
 Suguru Inatomi / 稲富 駿   

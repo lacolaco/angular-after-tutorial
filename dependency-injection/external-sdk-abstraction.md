@@ -55,7 +55,7 @@ export class EventTrackerAdapter {
   constructor(private eventTrackerResolver: Promise<EventTracker>) { }
 
   sendEvent(event: any) {
-    this.eventTrackerResolver.then(eventTracker => {
+    return this.eventTrackerResolver.then(eventTracker => {
       eventTracker.sendEvent(event)
     });
   }
@@ -84,9 +84,9 @@ describe('EventTrackerAdapter', () => {
     adapter = new EventTrackerAdapter(Promise.resolve(mockEventTracker));
   });
 
-  it('should call `sendEvent`', () => {
+  it('should call `sendEvent`', async () => {
     spyOn(mockEventTracker, 'sendEvent');
-    adapter.sendEvent('foo');
+    await adapter.sendEvent('foo');
     expect(mockEventTracker.sendEvent).toHaveBeenCalled();
   });
 });
