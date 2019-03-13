@@ -5,6 +5,11 @@
 * [公式チュートリアルのサービスの章](https://angular.jp/tutorial/toh-pt4)を理解していること
 * Angularの[依存性の注入](https://angular.jp/guide/dependency-injection)の概要を理解していること
 
+{% hint style="info" %}
+**\[追記: 2019/03/13\]**  
+値プロバイダーの宣言方法を、Tree-Shakableプロバイダーを使った手法に変更しました。
+{% endhint %}
+
 ## アプリケーションコンフィグ
 
 多くのアプリケーションは実行時の振る舞いを柔軟に制御するために、**定数**や**環境変数**を使って設定を管理しています。たとえば、APIサーバーのベースURLを開発環境とプロダクション環境で切り替えるためには、環境ごとに固有の文字列を使うように設計します。あるいは、外部サービスのAPIキーや、アプリケーションのタイトルなども同様でしょう。ブラウザのUserAgentのように実行の初期段階で決定するものも、ある種の環境変数といえます。
@@ -24,11 +29,11 @@
 
 アプリケーションコンフィグを扱う際のよくある失敗は、**アプリケーションのいろんな場所から直接参照してしまう**ことです。Angularのアプリケーションで考えると、コンポーネントやサービスのそれぞれがアプリケーションコンフィグに直接依存する状態です。コンポーネントやサービス単体でのテストができず、設定値を変化させたテストを書くことができません。また、設定値が増えたり、名前や形式が変わったときに変更しなければならないモジュールも増えます。
 
-![](../.gitbook/assets/image%20%287%29.png)
+![](../.gitbook/assets/image%20%289%29.png)
 
 アプリケーション外とアプリケーション内が複雑に絡み合ったこの状態を解決するために、**依存性の注入（DI）**を活用しましょう。アプリケーションのブートストラップ時にコンフィグをDIに取り入れ、設定値がコンポーネントやサービスへ動的に注入されるようにします。その具体的な方法についてこれから学びます。
 
-![](../.gitbook/assets/image%20%285%29.png)
+![](../.gitbook/assets/image%20%287%29.png)
 
 ## 値プロバイダー（Value Provider）
 
@@ -66,37 +71,20 @@ export const APP_TITLE = new InjectionToken<string>('appTitle');
 {% endcode-tabs-item %}
 {% endcode-tabs %}
 
-次に `APP_TITLE` トークンに値を提供するプロバイダーを作成します。同じ `app-title.ts` ファイルに次のようにプロバイダー関数を定義します。引数で受け取った文字列を値プロバイダーの `useValue` プロパティにセットしています。
+次に `APP_TITLE` トークンに値を提供するプロバイダーを作成します。`InjectionToken` の第2引数で、 `APP_TITLE` をアプリケーション全体で有効にする `providedIn: 'root'` の設定と、その値の指定をします。
 
 ```typescript
-export function provideAppTitle(appTitle: string) {
-  return [
-    {
-      provide: APP_TITLE,
-      useValue: appTitle,
-    }
-  ];
-}
+import { config } from '../../config';
+
+export const APP_TITLE = new InjectionToken<string>('appTitle', {
+  providedIn: 'root',
+  factory: () => config.appTitle,
+});
 ```
 
-最後に AppModule の `providers` 配列に `provideAppTitle` 関数の戻り値を加えます。ここまで全く結合していなかったコンフィグとアプリケーションが、AppModuleの上でだけ関係を持ちます。AppModuleを境界として**アプリケーションの中と外を分離**し、**アプリケーション内部からはコンフィグについてまったく関心を持たない**ようにできました。
+`AppModule` の `providers` フィールドではなく、**トークンが自律的に**プロバイダーを宣言します。これは [**Tree-Shakable プロバイダー**](https://angular.jp/guide/dependency-injection-providers#tree-shakable-providers) ****と呼ばれるものです。NgModuleから静的に参照されないことがプロダクションビルドで不必要なコードを除去する際の助けとなります。
 
-{% code-tabs %}
-{% code-tabs-item title="app.module.ts" %}
-```typescript
-import { config } from '../config';
-import { provideAppTitle } from './providers/app-title';
-
-@NgModule({
-  ...
-  providers: [
-    provideAppTitle(config.appTitle),
-  ]
-})
-export class AppModule { }
-```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+ここまで全く結合していなかったコンフィグとアプリケーションが、DIを通じて関係を持ちました。DIを境界として**アプリケーションの中と外を分離**し、**アプリケーション内部からはコンフィグについてまったく関心を持たない**ようにできました。
 
 コンポーネントやサービスでは、次のように `@Inject` デコレーターを使うことで `APP_TITLE` トークンに紐付いた値をコンストラクタ引数として注入します。
 
@@ -144,51 +132,32 @@ export class AppComponent {
 
 ここまでの内容が理解できたら次のステップに進みましょう。コンフィグの内容が増えてくると、それぞれに独立したプロバイダーとトークンを定義するのは面倒です。コンフィグは基本的に一箇所で管理されるものですから、変更のタイミングが同じだとすれば個別に管理される必要もありません。アプリケーションコンフィグをまとめて管理する `AppConfig` を導入してみましょう。
 
-先ほどの `app-title.ts` ファイルを `app-config.ts` ファイルにリネームし、次のように変更します。注目すべきポイントは、 `InjectionToken` のインスタンスがなくなり、 **`AppConfig` 抽象クラス**が定義されたことと、その**抽象クラスが値プロバイダーのトークンに使われている**ことです。
+先ほどの `app-title.ts` ファイルを `app-config.ts` ファイルにリネームし、次のように変更します。注目すべきポイントは、 `InjectionToken` のインスタンスがなくなり、 **`AppConfig` 抽象クラス**が定義されたことと、その**抽象クラスの値プロバイダーを`@Injectable` で宣言している**ことです。
 
 {% code-tabs %}
 {% code-tabs-item title="app-config.ts" %}
 ```typescript
+import { Injectable } from '@angular/core';
+import { config } from '../../config';
+
+const appConfig: AppConfig = {
+  appTitle: config.appTitle;
+};
+
+@Injectable({
+  providedIn: 'root',
+  useValue: appConfig
+})
 export abstract class AppConfig {
   readonly appTitle: string;
 }
-
-export function provideAppConfig(appConfig: AppConfig) {
-  return [
-    {
-      provide: AppConfig,
-      useValue: appConfig
-    }
-  ];
-}
 ```
 {% endcode-tabs-item %}
 {% endcode-tabs %}
 
-プロバイダーのトークンに使えるのはJavaScriptとして実体のあるオブジェクトだけです。つまり、TypeScriptのトランスパイル前にしか存在しない `interface` や `type` はトークンになりません。しかし**抽象クラスはトランスパイル後にもクラスとして残る**ため、トークンとして使うことができます。また、`AppConfig` はクラス型であると同時にインターフェースとしても使えるため、オブジェクトを受け取る引数にもなります。
+プロバイダーのトークンに使えるのはJavaScriptとして実体のあるオブジェクトだけです。つまり、TypeScriptのトランスパイル前にしか存在しない `interface` や `type` はトークンになりません。しかし**抽象クラスはトランスパイル後にもクラスとして残る**ため、トークンとして使うことができます。
 
-この変更によりAppModuleは次のようになります。 `provideAppConfig` 関数にコンフィグから取得した値を渡しています。
-
-{% code-tabs %}
-{% code-tabs-item title="app.module.ts" %}
-```typescript
-import { config } from '../config';
-import { provideAppConfig } from './providers/app-config';
-
-@NgModule({
-  ...
-  providers: [
-    provideAppConfig({
-      appTitle: config.appTitle
-    }),
-  ]
-})
-export class AppModule { }
-```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
-
-大きく変わるのは注入をおこなう側です。クラス型をトークンにしたため、 `@Inject` はもう必要ありません。クラスプロバイダーで提供されたクラスと同じように `AppConfig` 型をトークンとして注入できます。
+この変更により、注入をおこなう側も影響を受けます。クラス型をトークンにしたため、 `@Inject` はもう必要ありません。クラスプロバイダーで提供されたクラスと同じように `AppConfig` 型をトークンとして注入できます。
 
 {% code-tabs %}
 {% code-tabs-item title="app.component.ts" %}

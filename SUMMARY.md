@@ -25,4 +25,5 @@
 
 * [アプリケーションコンフィグの管理](dependency-injection/app-config.md)
 * [サードパーティSDKの抽象化](dependency-injection/external-sdk-abstraction.md)
+* [プロバイダーの種類と選び方](dependency-injection/provider-types-and-choice.md)
 
