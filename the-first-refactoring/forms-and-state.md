@@ -24,7 +24,7 @@ export interface State {
     items: User[];
   };
   userListFilter: UserListFilter;
-}ts
+}
 ```
 {% endcode-tabs-item %}
 {% endcode-tabs %}
@@ -125,7 +125,7 @@ export class UserService {
 ここに、フィルタリングのための機能を追加していきます。ところで、`UserService` の責務はユーザーリストを表示するためのビジネスロジックを集約することですから、フィルタリングのための処理も `UserService` に記述します。ただし名前が実態に合っていないため、ここで名前を `UserListUsecase` に変更します。また次のように、フィルター条件をセットする `setNameFilter` メソッドを実装し、 `users$` ゲッターはフィルタリングを適用した結果の配列を返すように変更します。
 
 {% code-tabs %}
-{% code-tabs-item title="user-list.usecase" %}
+{% code-tabs-item title="user-list.usecase.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
