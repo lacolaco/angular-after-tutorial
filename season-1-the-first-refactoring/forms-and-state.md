@@ -2,7 +2,7 @@
 
 前のページではユーザーリストを表示するための配列をRxJSの `BehaviorSubject` で管理しました。このページでは、ユーザーリストにフィルター機能を追加する中での、少し複雑になった状態を管理する設計パターンについて見ていきましょう。
 
-### 配列のフィルタリング
+## 配列のフィルタリング
 
 今回実装するユーザーリストのフィルタリングは、以下の要件を満たすものとします。
 
@@ -50,7 +50,7 @@ export const initialState = {
 {% endcode-tabs-item %}
 {% endcode-tabs %}
 
-#### Store
+### Store
 
 状態管理をおこなうStoreサービスを作成します。状態を保持するための `BehaviorSubject` と、状態を更新するための `update` メソッド、そして状態を購読するための `select<T>` メソッドを実装しています。
 
@@ -120,7 +120,7 @@ export class UserService {
 {% endcode-tabs-item %}
 {% endcode-tabs %}
 
-#### UserListUsecase
+### UserListUsecase
 
 ここに、フィルタリングのための機能を追加していきます。ところで、`UserService` の責務はユーザーリストを表示するためのビジネスロジックを集約することですから、フィルタリングのための処理も `UserService` に記述します。ただし名前が実態に合っていないため、ここで名前を `UserListUsecase` に変更します。また次のように、フィルター条件をセットする `setNameFilter` メソッドを実装し、 `users$` ゲッターはフィルタリングを適用した結果の配列を返すように変更します。
 
@@ -176,7 +176,7 @@ export class UserListUsecase {
 {% endcode-tabs-item %}
 {% endcode-tabs %}
 
-### フィルターの追加
+## フィルターの追加
 
 必要なビジネスロジックが揃ったので、ビューの変更をおこないましょう。フィルタリング設定のフォームを表示するための `UserListFilterComponent` を作成します。テンプレートはReactve Formにひとつのinput要素だけがあるシンプルはフォームです。コンポーネントクラスでは、Inputとして渡された状態をフォームにセットし、フォームの更新をOutputで親クラスに通知しています。フォームの入力値が更新されるたびに `valueChange` Outputのイベントが発火します。
 
@@ -185,7 +185,7 @@ export class UserListUsecase {
 ```markup
 <form [formGroup]="form">
 
-	<label>
+    <label>
     Name Filter:
     <input formControlName="nameFilter" >
   </label>
@@ -278,7 +278,6 @@ export class AppComponent {
     this.userList.setNameFilter(value.nameFilter);
   }
 }
-
 ```
 {% endcode-tabs-item %}
 {% endcode-tabs %}
@@ -296,11 +295,7 @@ export class AppComponent {
 * `UserService` を `UserListUsecase` にリネームし、フィルタリングに関するビジネスロジックを集約しました
 * `UserListFilterComponent` を作成し、リアクティブフォームを使ってInput/Outputベースのフォームを実装しました
 
-{% embed url="https://stackblitz.com/edit/angular-jaztzn" %}
+{% embed url="https://stackblitz.com/edit/angular-jaztzn" caption="" %}
 
 アプリケーションの基本的な構成が固まってきました。次の最後のページでは、ユーザーの詳細画面へルーティングする機能を実装し、複数ページにおける設計パターンを見ていきます。
-
-
-
-
 
