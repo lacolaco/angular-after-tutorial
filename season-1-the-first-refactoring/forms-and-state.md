@@ -180,6 +180,10 @@ export class UserListUsecase {
 
 必要なビジネスロジックが揃ったので、ビューの変更をおこないましょう。フィルタリング設定のフォームを表示するための `UserListFilterComponent` を作成します。テンプレートはReactve Formにひとつのinput要素だけがあるシンプルはフォームです。コンポーネントクラスでは、Inputとして渡された状態をフォームにセットし、フォームの更新をOutputで親クラスに通知しています。フォームの入力値が更新されるたびに `valueChange` Outputのイベントが発火します。
 
+{% hint style="warning" %}
+Reactive Formを使うためには、`AppModule`の `imports` メタデータに`ReactiveFormsModule` を追加する必要があります。
+{% endhint %}
+
 {% code-tabs %}
 {% code-tabs-item title="user-list-filter.component.html" %}
 ```markup
