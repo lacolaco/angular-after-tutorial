@@ -12,8 +12,7 @@
 
 これを実現するために、アプリケーションが管理する状態の型を次のように定義します。`userList.items` にはユーザーの配列を保持します。名前でフィルタリングするための文字列は `userListFilter.nameFilter` に保持します。
 
-{% code-tabs %}
-{% code-tabs-item title="state.ts" %}
+{% code title="state.ts" %}
 ```typescript
 export interface UserListFilter {
   nameFilter: string;
@@ -26,8 +25,7 @@ export interface State {
   userListFilter: UserListFilter;
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 今後文字列以外にも年齢や性別のような属性でフィルタリングをおこなうような変更に備えるため、フィルタリングに関する状態は `userListFilter` に、ユーザーリストを表示するためのデータは `userList` に集約しています。
 
@@ -35,8 +33,7 @@ export interface State {
 
 まずはアプリケーションの初期状態を定義します。 `state.ts` に `inistalState` 変数を宣言します。
 
-{% code-tabs %}
-{% code-tabs-item title="state.ts" %}
+{% code title="state.ts" %}
 ```typescript
 export const initialState = {
   userList: {
@@ -47,15 +44,13 @@ export const initialState = {
   }
 };
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ### Store
 
 状態管理をおこなうStoreサービスを作成します。状態を保持するための `BehaviorSubject` と、状態を更新するための `update` メソッド、そして状態を購読するための `select<T>` メソッドを実装しています。
 
-{% code-tabs %}
-{% code-tabs-item title="store.service.ts" %}
+{% code title="store.service.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
@@ -79,13 +74,13 @@ export class Store {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
-このStoreを使うように、`UserService` を変更します。 `AppComponent` から見た `UserService` のインターフェースは変えず、内部実装だけを変更します。これにより、状態管理の責務が `UserService` から切り離されます。同時に、`fetchUsers` メソッドは async関数を使いシンプルに書き直します。HTTPリクエストのObservableはリクエストが完了すると同時に自動でcompleteするため、Subscriptionを使ったキャンセルをしないのであればPromiseと大きな違いはありません。ここではコールバックネストを減らして可読性を高めるためにasync関数を利用しました。
+このStoreを使うように、`UserService` を変更します。 `AppComponent` から見た `UserService` のインターフェースは変えず、内部実装だけを変更します。これにより、状態管理の責務が `UserService` から切り離されます。同時に、`fetchUsers` メソッドは async関数を使いシンプルに書き直します。HTTPリクエストのObservableはリクエストが完了すると同時に自動でcompleteするため、Subscriptionを使ったキャンセルをしないのであればPromiseと大きな違いはありません。（「Observableのライフサイクル」を参照）ここではコールバックネストを減らして可読性を高めるためにasync関数を利用しました。
 
-{% code-tabs %}
-{% code-tabs-item title="user.service.ts" %}
+{% page-ref page="../season-2-effective-rxjs/observable-lifecycle.md" %}
+
+{% code title="user.service.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -117,15 +112,13 @@ export class UserService {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ### UserListUsecase
 
 ここに、フィルタリングのための機能を追加していきます。ところで、`UserService` の責務はユーザーリストを表示するためのビジネスロジックを集約することですから、フィルタリングのための処理も `UserService` に記述します。ただし名前が実態に合っていないため、ここで名前を `UserListUsecase` に変更します。また次のように、フィルター条件をセットする `setNameFilter` メソッドを実装し、 `users$` ゲッターはフィルタリングを適用した結果の配列を返すように変更します。
 
-{% code-tabs %}
-{% code-tabs-item title="user-list.usecase.ts" %}
+{% code title="user-list.usecase.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -173,8 +166,7 @@ export class UserListUsecase {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ## フィルターの追加
 
@@ -184,8 +176,8 @@ export class UserListUsecase {
 Reactive Formを使うためには、`AppModule`の `imports` メタデータに`ReactiveFormsModule` を追加する必要があります。
 {% endhint %}
 
-{% code-tabs %}
-{% code-tabs-item title="user-list-filter.component.html" %}
+{% tabs %}
+{% tab title="user-list-filter.component.html" %}
 ```markup
 <form [formGroup]="form">
 
@@ -196,9 +188,9 @@ Reactive Formを使うためには、`AppModule`の `imports` メタデータに
 
 </form>
 ```
-{% endcode-tabs-item %}
+{% endtab %}
 
-{% code-tabs-item title="user-list-filter.component.ts" %}
+{% tab title="user-list-filter.component.ts" %}
 ```typescript
 import { Component, Input, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
@@ -238,13 +230,13 @@ export class UserListFilterComponent implements OnDestroy {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endtab %}
+{% endtabs %}
 
 `AppComponent` を変更し、`UserListFilterComponent` とのコミュニーケーションをおこないます。フォームから発火されたフィルター条件の更新は、`UserListUsecase` 経由で保存され、ユーザーリストの表示に影響します。
 
-{% code-tabs %}
-{% code-tabs-item title="app.component.html" %}
+{% tabs %}
+{% tab title="app.component.html" %}
 ```markup
 <user-list-filter 
   [value]="userListFilter$ | async" 
@@ -252,9 +244,9 @@ export class UserListFilterComponent implements OnDestroy {
 </user-list-filter>
 <user-list [users]="users$ | async"></user-list>
 ```
-{% endcode-tabs-item %}
+{% endtab %}
 
-{% code-tabs-item title="app.component.ts" %}
+{% tab title="app.component.ts" %}
 ```typescript
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -283,8 +275,8 @@ export class AppComponent {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endtab %}
+{% endtabs %}
 
 これでユーザーリストのフィルタリング機能が実装できました。
 

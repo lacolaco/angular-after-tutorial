@@ -8,8 +8,7 @@
 
 ユーザー詳細ページを作るにあたって、まずは現在の `User` 型を拡張します。名前に加えて、メールアドレスと電話番号、会社名をもつようになります。
 
-{% code-tabs %}
-{% code-tabs-item title="user.ts" %}
+{% code title="user.ts" %}
 ```typescript
 export interface User {
   id: string;
@@ -21,15 +20,13 @@ export interface User {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ### Stateの拡張
 
 ユーザー詳細にかかわるアプリケーションの状態の定義を、 `State` 型に追加し、初期値を設定します。詳細を表示するユーザーのインスタンスを `userDetail.user` に保持すると、次のようになります。（変更部分だけを表示しています）
 
-{% code-tabs %}
-{% code-tabs-item title="state.ts" %}
+{% code title="state.ts" %}
 ```typescript
 import { User } from './user';
 
@@ -47,8 +44,7 @@ export const initialState = {
   }
 };
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ### UserApiServiceの作成
 
@@ -56,8 +52,7 @@ export const initialState = {
 
 `UserApiService` は次のようなクラスです。すべてのユーザーを取得するAPI呼び出しと、個別のユーザーをID指定で取得するAPI呼び出しの両方をサポートします。
 
-{% code-tabs %}
-{% code-tabs-item title="user-api.service.ts" %}
+{% code title="user-api.service.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -79,13 +74,11 @@ export class UserApiService {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 そして `UserListUsecase` は次のようにリファクタリングします。 `HttpClient` に依存していましたが、代わりに `UserApiService` に依存するようになり、 `fetchUsers` メソッドの中で利用するようになりました。（変更部分だけを表示しています）
 
-{% code-tabs %}
-{% code-tabs-item title="user-list.usecase.ts" %}
+{% code title="user-list.usecase.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { filter } from 'rxjs/operators';
@@ -111,8 +104,7 @@ export class UserListUsecase {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ### UserDetailPageComponentの作成
 
@@ -120,8 +112,8 @@ export class UserListUsecase {
 
 ルーティングに利用されるコンポーネントは、 `ActivatedRoute` サービスを利用することで、ルーティングに関わる情報にアクセスできます。たとえば、 `/users/:userId` でルーティングされるコンポーネントから `userId` を取得するために、 `ActivatedRoute.params` を利用します。ここではサービスをインジェクトするだけにとどめ、あとで利用します。
 
-{% code-tabs %}
-{% code-tabs-item title="app-routing.module.ts" %}
+{% tabs %}
+{% tab title="app-routing.module.ts" %}
 ```typescript
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
@@ -140,9 +132,9 @@ import { UserDetailPageComponent } from './view/user-detail-page/user-detail-pag
 })
 export class AppRoutingModule { }
 ```
-{% endcode-tabs-item %}
+{% endtab %}
 
-{% code-tabs-item title="user-detail-page.component.ts" %}
+{% tab title="user-detail-page.component.ts" %}
 ```typescript
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -156,8 +148,8 @@ export class UserDetailPageComponent {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endtab %}
+{% endtabs %}
 
 ### URLパラメータの監視と状態の接続
 
@@ -170,8 +162,7 @@ export class UserDetailPageComponent {
 
 まずは最初のステップを実装しましょう。 `userId` は `ActivatedRoute.params` のObservableを購読し、渡されるオブジェクトから `params['userId']` のように取得できます。`userId` が変更したときにだけコールバック関数が呼び出されるように注意して実装すると次のようになります。 `onDestroy$` はコンポーネントが破棄されたタイミングで完了するObservableです。このObservableとRxJSの `takeUntil` オペレーターを使った自動的な購読停止のパターンは、ルーティングに限らずコンポーネントが明示的にObservableを購読しなければならない場合にとても有用です。
 
-{% code-tabs %}
-{% code-tabs-item title="user-detail-page.component.ts" %}
+{% code title="user-detail-page.component.ts" %}
 ```typescript
 import { Component, OnDestroy, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -205,8 +196,7 @@ export class UserDetailPageComponent implements OnDestroy {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 続いて、ユーザーIDを使ってAPIを呼び出すステップを実装しなければならないですが、ここまでの内容を読んでいればわかるように、明らかにこのコンポーネントに記述すべきではありませんね。さらに言えば、 `ActivatedRoute` をどのように監視してユーザーIDを取り出すかについても、ビューを担当するコンポーネントの責務ではありません。
 
@@ -214,10 +204,10 @@ export class UserDetailPageComponent implements OnDestroy {
 
 ### UserDetailUsecase の作成
 
-`UserDetailUsecase` は`UserListUsecase` と同じように、コンポーネントが持つべきでない責務を引き受け、柔軟に要求をこなす便利屋です。まずは、ユーザーIDの変化を監視する役目を、 `subscribeRouteChange` メソッドとして実装します。ここでのポイントは、 `ActivatedRoute` のインジェクトはコンポーネントがおこなうことです。`ActivatedRoute` はRouterの設定に対応した階層構造を持っており、ルーターによりアクティベートされたコンポーネント以外でインジェクトすると、うまく意図通りのイベントを購読できないことがあります。 `/users/:userId` のパラメーターを取得したい場合には、そのパスと対応した `UserDetailPageComponent` でインジェクトします。
+`UserDetailUsecase` は`UserListUsecase` と同じように、コンポーネントが持つべきでない責務を引き受け、柔軟に要求をこなす便利屋です。まずは、ユーザーIDに応じてユーザー情報を取得する処理を `fetchUser` メソッドとして実装します。ここでのポイントは、 `ActivatedRoute` のインジェクトと購読はコンポーネントがおこなうことです。`ActivatedRoute` はRouterの設定に対応した階層構造を持っており、ルーターによりアクティベートされたコンポーネント以外でインジェクトすると、うまく意図通りのイベントを購読できないことがあります。 `/users/:userId` のパラメーターを取得したい場合には、そのパスと対応した `UserDetailPageComponent` でインジェクトします。
 
-{% code-tabs %}
-{% code-tabs-item title="user-detai.usecase.ts" %}
+{% tabs %}
+{% tab title="user-detai.usecase.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -227,119 +217,41 @@ import { takeUntil, map, distinctUntilChanged } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class UserDetailUsecase {
 
-  subscribeRouteChanges(route: ActivatedRoute, untilObservable: Observable<any>) {
-    route.params.pipe(
-      takeUntil(untilObservable),
-      map(params => params['userId']),
-      distinctUntilChanged(),
-    ).subscribe(userId => this.onUserIdChanged(userId));
-  }
-
-  private async onUserIdChanged(userId: string) {
+  fetchUser(userId: string) {
   }
 }
 ```
-{% endcode-tabs-item %}
+{% endtab %}
 
-{% code-tabs-item title="user-detail-page.component.ts" %}
+{% tab title="user-detail-page.component.ts" %}
 ```typescript
-import { Component, OnDestroy, EventEmitter } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { UserDetailUsecase } from '../../usecase/user-detail.usecase';
+import { Component, OnInit, OnDestroy, EventEmitter } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
+import { takeUntil, map, distinctUntilChanged } from "rxjs/operators";
+import { UserDetailUsecase } from "../../usecase/user-detail.usecase";
 
 @Component({
-  templateUrl: './user-detail-page.component.html',
-  styleUrls: ['./user-detail-page.component.css']
+  templateUrl: "./user-detail-page.component.html",
+  styleUrls: ["./user-detail-page.component.css"]
 })
-export class UserDetailPageComponent implements OnDestroy {
-  private onDestroy$ = new EventEmitter();
-
-  constructor(
-    private route: ActivatedRoute, 
-    private userDetailUsecase: UserDetailUsecase
-  ) {
-    this.userDetailUsecase.subscribeRouteChanges(this.route, this.onDestroy$);
-  }
-
-  ngOnDestroy() {
-    this.onDestroy$.complete();
-  }
-}
-```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
-
-### API呼び出しと状態の更新
-
-`onUserIdChanged` メソッドの中で、APIを呼び出してレスポンスをもとに状態を更新します。さきほど作成した `UserApiService` を利用して、ユーザーIDからユーザーを取得します。（変更部分だけを表示しています）また、`UserListUsecase` と同じように、`user$` ゲッターは  `Store` からユーザー詳細の描画に必要な状態を選択して公開しています。
-
-{% code-tabs %}
-{% code-tabs-item title="user-detail.usecase.ts" %}
-```typescript
-import { Injectable } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Observable } from 'rxjs';
-import { takeUntil, map, distinctUntilChanged } from 'rxjs/operators';
-import { Store } from '../service/store.service';
-import { UserApiService } from '../service/user-api.service';
-import { User } from '../user';
-
-@Injectable({ providedIn: 'root' })
-export class UserDetailUsecase {
-
-  get user$() {
-    return this.store.select(state => state.userDetail.user);
-  }
-
-  constructor(private userApi: UserApiService, private store: Store) { }
-
-  private async onUserIdChanged(userId: string) {
-    // リクエスト前に現在の状態をリセットする
-    this.store.update(state => ({
-      ...state,
-      userDetail: {
-        ...state.userDetail,
-        user: null,
-      }
-    }));
-
-    // APIを呼び出す
-    const user = await this.userApi.getUserById(id);
-
-    // 状態を更新する
-    this.store.update(state => ({
-      ...state,
-      userDetail: {
-        ...state.userDetail,
-        user,
-      }
-    }));
-  }
-}
-```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
-
-最後に `UserDetailPageComponent` を次のように変更し、ユーザー情報を表示します。 `ngIf` と `async` パイプを使い、ユーザーが存在する時には情報を表示し、`null` のときには読み込み中である表示をおこないます。
-
-{% code-tabs %}
-{% code-tabs-item title="user-detail-page.component.ts" %}
-```typescript
-import { Component, OnDestroy, EventEmitter } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { UserDetailUsecase } from '../../usecase/user-detail.usecase';
-
-@Component({
-  templateUrl: './user-detail-page.component.html',
-  styleUrls: ['./user-detail-page.component.css']
-})
-export class UserDetailPageComponent implements OnDestroy {
+export class UserDetailPageComponent implements OnInit, OnDestroy {
   user$ = this.userDetailUsecase.user$;
 
   private onDestroy$ = new EventEmitter();
 
-  constructor(private route: ActivatedRoute, private userDetailUsecase: UserDetailUsecase) {
-    this.userDetailUsecase.subscribeRouteChanges(this.route, this.onDestroy$);
+  constructor(
+    private route: ActivatedRoute,
+    private userDetailUsecase: UserDetailUsecase
+  ) {}
+
+  ngOnInit() {
+    this.route.params
+      .pipe(
+        takeUntil(this.onDestroy$),
+        map(params => params["userId"]),
+        distinctUntilChanged()
+      )
+      .subscribe(userId => this.userDetailUsecase.fetchUser(userId));
   }
 
   ngOnDestroy() {
@@ -347,9 +259,100 @@ export class UserDetailPageComponent implements OnDestroy {
   }
 }
 ```
-{% endcode-tabs-item %}
+{% endtab %}
+{% endtabs %}
 
-{% code-tabs-item title="user-detail-page.component.html" %}
+### API呼び出しと状態の更新
+
+`fetchUser` メソッドの中で、APIを呼び出してレスポンスをもとに状態を更新します。さきほど作成した `UserApiService` を利用して、ユーザーIDからユーザーを取得します。（変更部分だけを表示しています）また、`UserListUsecase` と同じように、`user$` ゲッターは  `Store` からユーザー詳細の描画に必要な状態を選択して公開しています。
+
+{% code title="user-detail.usecase.ts" %}
+```typescript
+import { Injectable } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
+import { Observable } from "rxjs";
+import { takeUntil, map, distinctUntilChanged } from "rxjs/operators";
+import { Store } from "../service/store.service";
+import { UserApiService } from "../service/user-api.service";
+import { User } from "../user";
+
+@Injectable({ providedIn: "root" })
+export class UserDetailUsecase {
+  get user$() {
+    return this.store.select(state => state.userDetail.user);
+  }
+
+  constructor(private userApi: UserApiService, private store: Store) {}
+
+  async fetchUser(userId: string) {
+    this.store.update(state => ({
+      ...state,
+      userDetail: {
+        ...state.userDetail,
+        user: null
+      }
+    }));
+
+    const user = await this.userApi.getUserById(userId);
+
+    // delay for demo
+    setTimeout(() => {
+      this.store.update(state => ({
+        ...state,
+        userDetail: {
+          ...state.userDetail,
+          user
+        }
+      }));
+    }, 500);
+  }
+}
+
+```
+{% endcode %}
+
+最後に `UserDetailPageComponent` を次のように変更し、ユーザー情報を表示します。 `ngIf` と `async` パイプを使い、ユーザーが存在する時には情報を表示し、`null` のときには読み込み中である表示をおこないます。
+
+{% tabs %}
+{% tab title="user-detail-page.component.ts" %}
+```typescript
+import { Component, OnInit, OnDestroy, EventEmitter } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
+import { takeUntil, map, distinctUntilChanged } from "rxjs/operators";
+import { UserDetailUsecase } from "../../usecase/user-detail.usecase";
+
+@Component({
+  templateUrl: "./user-detail-page.component.html",
+  styleUrls: ["./user-detail-page.component.css"]
+})
+export class UserDetailPageComponent implements OnInit, OnDestroy {
+  user$ = this.userDetailUsecase.user$;
+
+  private onDestroy$ = new EventEmitter();
+
+  constructor(
+    private route: ActivatedRoute,
+    private userDetailUsecase: UserDetailUsecase
+  ) {}
+
+  ngOnInit() {
+    this.route.params
+      .pipe(
+        takeUntil(this.onDestroy$),
+        map(params => params["userId"]),
+        distinctUntilChanged()
+      )
+      .subscribe(userId => this.userDetailUsecase.fetchUser(userId));
+  }
+
+  ngOnDestroy() {
+    this.onDestroy$.complete();
+  }
+}
+```
+{% endtab %}
+
+{% tab title="user-detail-page.component.html" %}
 ```markup
 <ng-container *ngIf="user$ | async as user; else userFetching">
   <h1>{{user.name}}</h1>
@@ -369,8 +372,8 @@ export class UserDetailPageComponent implements OnDestroy {
   <div>Fetching...</div>
 </ng-template>
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endtab %}
+{% endtabs %}
 
 これですべての実装がおわりました。完成したアプリケーションは以下のサンプルコードから実行できます。
 
