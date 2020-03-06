@@ -23,8 +23,8 @@
 
 ユーザーリストの繰り返し単位のコンポーネントは、 `UserListItemComponent` と定義します。このコンポーネントの責任は、渡された1件のユーザーをリストアイテムとして表示することです。それ以外の理由でこのコンポーネントが変更されてはいけません。
 
-{% code-tabs %}
-{% code-tabs-item title="user-list-item.component.ts" %}
+{% tabs %}
+{% tab title="user-list-item.component.ts" %}
 ```typescript
 import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
 import { User } from '../../user';
@@ -40,19 +40,18 @@ export class UserListItemComponent {
   user!: User;
 }
 ```
-{% endcode-tabs-item %}
+{% endtab %}
 
-{% code-tabs-item title="user-list-item.component.html" %}
+{% tab title="user-list-item.component.html" %}
 ```markup
 #{{user.id}} {{user.name}}
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endtab %}
+{% endtabs %}
 
 結果として、AppComponentのテンプレートは次のようになります。AppComponentが持っていたユーザーリストをどのように表示するか、ユーザーの情報をどうレイアウトするかという責任から開放されました。今後、ユーザーリストにメールアドレスを表示したいとなっても、AppComponentは変更されません。
 
-{% code-tabs %}
-{% code-tabs-item title="app.component.html" %}
+{% code title="app.component.html" %}
 ```markup
 <ul>
 	<li *ngFor="let user of users">
@@ -60,15 +59,14 @@ export class UserListItemComponent {
 	</li>
 </ul>
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ### UserListComponent
 
 続いてもうひとつの責任、ユーザーの配列をどのようにリストとして表示するかという関心事をAppComponentから切り出すことにしましょう。新しく `UserListComponent` を作成します。
 
-{% code-tabs %}
-{% code-tabs-item title="user-list.component.ts" %}
+{% tabs %}
+{% tab title="user-list.component.ts" %}
 ```typescript
 import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
 import { User } from '../../user';
@@ -84,9 +82,9 @@ export class UserListComponent {
   users!: User[];
 }
 ```
-{% endcode-tabs-item %}
+{% endtab %}
 
-{% code-tabs-item title="user-list.component.html" %}
+{% tab title="user-list.component.html" %}
 ```markup
 <ul>
 	<li *ngFor="let user of users">
@@ -94,18 +92,16 @@ export class UserListComponent {
 	</li>
 </ul>
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endtab %}
+{% endtabs %}
 
 結果として、AppComponentのテンプレートは次のようになります。AppComponentの責任は、アプリケーションのエントリポイントであることと、ユーザーの配列を取得することになりました。ユーザーの配列をどのようにリストとして表示するかというUIの関心事はUserListComponentに分離できました。
 
-{% code-tabs %}
-{% code-tabs-item title="app.component.html" %}
+{% code title="app.component.html" %}
 ```markup
 <user-list [users]="users"></user-list>
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 {% embed url="https://stackblitz.com/edit/angular-brjyhu?file=src%2Fapp%2Fapp.component.html" %}
 

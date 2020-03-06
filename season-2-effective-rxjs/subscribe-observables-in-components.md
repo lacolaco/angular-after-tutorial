@@ -15,8 +15,7 @@ Angularのコンポーネントの基本とRxJSの基本を習得したら、次
 コンポーネントを実装する前に、まずはサンプル用の `DataService` を用意します。これは[BehaviorSubject](http://reactivex.io/rxjs/manual/overview.html#behaviorsubject)を持つ単純なAngularのサービスです。`setValue` メソッドが `valueSubject` に値を流し、 `valueChanges` getterが `valueSubject` をObservableとして外部に公開します。  
 
 
-{% code-tabs %}
-{% code-tabs-item title="data.service.ts" %}
+{% code title="data.service.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
@@ -37,8 +36,7 @@ export class DataService {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 そして AppComponentには新たな値を流すためのボタンを用意します。ここをスタートとして改めて学んでいきましょう。
 
@@ -70,8 +68,7 @@ export class AppComponent {
 `subscribe` メソッドはコンストラクタ内で呼び出してはいけません。Angularのコンポーネントインスタンスが作成されるタイミングと、実際にコンポーネントがビューに配置されるタイミングは一致しません。予期しない挙動やエラーを防ぐために、`ngOnInit` よりも後のタイミングで呼び出しましょう。
 {% endhint %}
 
-{% code-tabs %}
-{% code-tabs-item title="explicit-subscribe.component.ts" %}
+{% code title="explicit-subscribe.component.ts" %}
 ```typescript
 import { Component, OnInit } from '@angular/core';
 import { DataService } from '../data.service';
@@ -92,13 +89,11 @@ export class ExplicitSubscribeComponent implements OnInit {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 `subscribe` メソッドを使う方法はシンプルに見えますが注意点があります。[Observableのライフサイクル](observable-lifecycle.md#noobservable-1) で述べたように、購読解除をしなければコンポーネントが破棄されたあとにメモリリークが発生します。おそらく、`ngOnDestroy` ライフサイクルフックメソッドを使って次のように `unsubscribe` メソッドを呼ぶ方法をまず最初に思いつくでしょう。
 
-{% code-tabs %}
-{% code-tabs-item title="explicit-subscribe.component.ts" %}
+{% code title="explicit-subscribe.component.ts" %}
 ```typescript
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
@@ -122,8 +117,7 @@ export class ExplicitSubscribeComponent implements OnInit, OnDestroy {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 この方法はクラスフィールドとして `Subscription` オブジェクトを保持する必要があります。`subscribe` メソッドの戻り値を使うことになりますが、コンポーネントが購読する Observableが複数になると、煩雑なコードになってしまうのが欠点であり、購読解除忘れも発生しがちです。
 
@@ -167,8 +161,7 @@ export class ExplicitSubscribeComponent implements OnInit, OnDestroy {
 
 先ほどの `ExplicitSubscribeComponent` と同じことを Asyncパイプで実装するコンポーネントを、 `AsyncPipeComponent` という名前で次のように作成します。
 
-{% code-tabs %}
-{% code-tabs-item title="async-pipe.component.ts" %}
+{% code title="async-pipe.component.ts" %}
 ```typescript
 import { Component } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -186,8 +179,7 @@ export class AsyncPipeComponent {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 びっくりするほどコードがスッキリしました。購読や購読解除に関するコードはなくなりました。同期的な`value` フィールドを廃止して、Observable型の `value$`  フィールドに変更しています。`value$` フィールドには`valueChanges` を代入し、テンプレートで `{{ value$ | async }}` のように Asyncパイプを適用しています。
 

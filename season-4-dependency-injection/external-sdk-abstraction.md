@@ -43,8 +43,7 @@ Angularアプリケーションから `window` を直接参照してしまうと
 
 次のように、 `EventTrackerAdapter` クラスを作成します。ここでのポイントは、**アダプタークラスは `window` に依存していない**ということです。このクラスはコンストラクタ引数で EventTracker 型のオブジェクトを受け取る予定になっています。ただし**サードパーティSDKは必ずしもアプリケーションより先に読み込まれているとは限らない**ため、非同期的に読み込まれることを考慮して、 Promiseでラップしています。
 
-{% code-tabs %}
-{% code-tabs-item title="event-tracker.ts" %}
+{% code title="event-tracker.ts" %}
 ```typescript
 // `eventTracker` の型
 export type EventTracker = {
@@ -61,15 +60,13 @@ export class EventTrackerAdapter {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 `eventTracker` オブジェクトがもっと多くのAPIを持っているなら、それぞれのAPIに対応するクラスメンバーを `EventTrackerAdapter` クラスに追加します。**アプリケーション外のAPIをアプリケーション内から完全に隠蔽する**のがアダプターの責務です。
 
 `window` のようなグローバル変数に依存していないため、テストコードもシンプルになります。たとえば `sendEvent` メソッドが正しくSDKの `sendEvent` APIを呼び出すかどうかは、Jasmineの `spyOn` を使って簡単にテストできます。
 
-{% code-tabs %}
-{% code-tabs-item title="event-tracker.spec.ts" %}
+{% code title="event-tracker.spec.ts" %}
 ```typescript
 import { EventTrackerAdapter, EventTracker } from './event-tracker';
 
@@ -91,15 +88,13 @@ describe('EventTrackerAdapter', () => {
   });
 });
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ### プロバイダーの定義
 
 `EventTrackerAdapter` クラスを提供するためのプロバイダーを定義しましょう。次のように、引数として渡された Windowオブジェクトから `eventTracker` 変数を取り出してインスタンス生成に使用します。今回はすでに `eventTracker` 変数が宣言済みであるという前提で `Promise.resolve` 関数を使いますが、非同期読み込みの場合はそれに応じて適切なPromiseを渡しましょう。
 
-{% code-tabs %}
-{% code-tabs-item title="event-tracker.ts" %}
+{% code title="event-tracker.ts" %}
 ```typescript
 export function provideEventTrackerAdapterInBrowser(_window: Window) {
   const resolver = Promise.resolve((_window as any)['eventTracker'])
@@ -111,13 +106,11 @@ export function provideEventTrackerAdapterInBrowser(_window: Window) {
   ];
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 `window` のモックオブジェクトを利用すれば、このプロバイダーが期待通りに振る舞うかどうかを簡単にテストできます。
 
-{% code-tabs %}
-{% code-tabs-item title="event-tracker.spec.ts" %}
+{% code title="event-tracker.spec.ts" %}
 ```typescript
 describe('provideEventTrackerAdapterInBrowser', () => {
   const mockWindow: any = {
@@ -140,8 +133,7 @@ describe('provideEventTrackerAdapterInBrowser', () => {
   });
 });
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ### プラットフォームプロバイダー
 
@@ -149,8 +141,7 @@ describe('provideEventTrackerAdapterInBrowser', () => {
 
 答えは、アプリケーションの**エントリポイント**である `main.ts` です。 エントリポイントは各プラットフォームごとに用意されます。つまり、このファイルはAngularアプリケーションの中で**プラットフォームに依存する責務を集約できる**場所だということです。
 
-{% code-tabs %}
-{% code-tabs-item title="main.ts" %}
+{% code title="main.ts" %}
 ```typescript
 import './polyfills';
 
@@ -161,15 +152,13 @@ import { AppModule } from './app/app.module';
 // Webブラウザー用のブートストラッピング
 platformBrowserDynamic().bootstrapModule(AppModule);
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 `platformBrowserDynamic` や `platformBrowser` 関数は、オプショナル引数としてプロバイダー配列を受け取ります。ここで渡されたプロバイダーは、各プラットフォームがデフォルトでもつ **プラットフォームプロバイダー** と結合されます**。**プラットフォームプロバイダーはさらに AppModule の `providers` と結合され、ブートストラッピングに利用されます。
 
 プラットフォームに依存するサービスはプラットフォームプロバイダーを利用することで、アプリケーション内部をプラットフォーム非依存の状態に保つことができます。次のように、 `platformBroserDynamic` 関数に引数を渡しましょう。
 
-{% code-tabs %}
-{% code-tabs-item title="main.ts" %}
+{% code title="main.ts" %}
 ```typescript
 import './polyfills';
 
@@ -182,8 +171,7 @@ platformBrowserDynamic([
   provideEventTrackerAdapterInBrowser(window)
 ]).bootstrapModule(AppModule);
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 回りくどい実装に見えるかもしれませんが、グローバル変数に依存するコードを最小限に抑えることで、ユニットテストが可能な範囲を広げています。そして将来的にAngular Universalを導入することになっても `platformServer` にサーバー用のプロバイダーを追加するだけで、アプリケーション側には一切変更を加える必要がありません。次の図のように、**プラットフォームごとの差異をアプリケーション内外の境界で吸収する**ような設計が、アプリケーション内のメンテナンス性を高めるポイントです。
 

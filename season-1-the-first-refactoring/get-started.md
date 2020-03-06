@@ -14,19 +14,17 @@ description: この章では、ユーザーリストを表示する簡単なア�
 
 最初の状態では、すべての処理を `AppComponent` だけでおこないます。サービスへの分割も、コンポーネントの分割もまだ何もおこなっていません。
 
-{% code-tabs %}
-{% code-tabs-item title="app/user.ts" %}
+{% code title="app/user.ts" %}
 ```typescript
 export interface User {
   id: string;
   name: string;
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
-{% code-tabs %}
-{% code-tabs-item title="app/app.component.ts" %}
+{% tabs %}
+{% tab title="app/app.component.ts" %}
 ```typescript
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -51,9 +49,9 @@ export class AppComponent {
 }
 
 ```
-{% endcode-tabs-item %}
+{% endtab %}
 
-{% code-tabs-item title="app/app.component.html" %}
+{% tab title="app/app.component.html" %}
 ```markup
 <ul>
 	<li *ngFor="let user of users">
@@ -61,8 +59,8 @@ export class AppComponent {
 	</li>
 </ul>
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endtab %}
+{% endtabs %}
 
 ![&#x30E6;&#x30FC;&#x30B6;&#x30FC;&#x30EA;&#x30B9;&#x30C8;](../.gitbook/assets/image%20%288%29.png)
 

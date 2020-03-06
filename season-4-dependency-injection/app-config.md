@@ -43,15 +43,13 @@ AngularのDIについて基本的な学習を終えていれば、 `providers: [
 
 まずはじめに、アプリケーションコンフィグの設定値を管理するファイルを用意します。 `src/config.ts` ファイルに、アプリケーションの設定値を配置します。
 
-{% code-tabs %}
-{% code-tabs-item title="src/config.ts" %}
+{% code title="src/config.ts" %}
 ```typescript
 export const config = {
   appTitle: 'Example App',
 };
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 この値を注入可能にするために、これから **トークン** と 値プロバイダーを定義します。
 
@@ -61,15 +59,13 @@ export const config = {
 
 `src/app/providers` ディレクトリの中に `app-title.ts` ファイルを作成し、次のようにトークンを作成します。 `InjectionToken` のコンストラクタに渡す文字列は何でもかまいませんが、トークンの変数名はアッパースネークケースとするのが慣例です。ジェネリック型に `string` を指定すると、このトークンで取得できるオブジェクトの型が文字列であることもAngularに伝えられます。
 
-{% code-tabs %}
-{% code-tabs-item title="app-titie.ts" %}
+{% code title="app-titie.ts" %}
 ```typescript
 import { InjectionToken } from '@angular/core';
 
 export const APP_TITLE = new InjectionToken<string>('appTitle');
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 次に `APP_TITLE` トークンに値を提供するプロバイダーを作成します。`InjectionToken` の第2引数で、 `APP_TITLE` をアプリケーション全体で有効にする `providedIn: 'root'` の設定と、その値の指定をします。
 
@@ -88,8 +84,7 @@ export const APP_TITLE = new InjectionToken<string>('appTitle', {
 
 コンポーネントやサービスでは、次のように `@Inject` デコレーターを使うことで `APP_TITLE` トークンに紐付いた値をコンストラクタ引数として注入します。
 
-{% code-tabs %}
-{% code-tabs-item title="app.component.ts" %}
+{% code title="app.component.ts" %}
 ```typescript
 import { Component, Inject } from '@angular/core';
 import { APP_TITLE } from './providers/app-title';
@@ -106,8 +101,7 @@ export class AppComponent {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 あるいは、 `Injector` クラスを注入し、 `get` メソッドで値を取得する方法もあります。 `InjectionToken` にジェネリクスで型を伝えているため、`get` メソッドの戻り値は正しく文字列型になります。
 
@@ -134,8 +128,7 @@ export class AppComponent {
 
 先ほどの `app-title.ts` ファイルを `app-config.ts` ファイルにリネームし、次のように変更します。注目すべきポイントは、 `InjectionToken` のインスタンスがなくなり、 **`AppConfig` 抽象クラス**が定義されたことと、その**抽象クラスの値プロバイダーを`@Injectable` で宣言している**ことです。
 
-{% code-tabs %}
-{% code-tabs-item title="app-config.ts" %}
+{% code title="app-config.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { config } from '../../config';
@@ -152,15 +145,13 @@ export abstract class AppConfig {
   readonly appTitle: string;
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 プロバイダーのトークンに使えるのはJavaScriptとして実体のあるオブジェクトだけです。つまり、TypeScriptのトランスパイル前にしか存在しない `interface` や `type` はトークンになりません。しかし**抽象クラスはトランスパイル後にもクラスとして残る**ため、トークンとして使うことができます。
 
 この変更により、注入をおこなう側も影響を受けます。クラス型をトークンにしたため、 `@Inject` はもう必要ありません。クラスプロバイダーで提供されたクラスと同じように `AppConfig` 型をトークンとして注入できます。
 
-{% code-tabs %}
-{% code-tabs-item title="app.component.ts" %}
+{% code title="app.component.ts" %}
 ```typescript
 import { Component } from '@angular/core';
 import { AppConfig } from './providers/app-config';
@@ -177,8 +168,7 @@ export class AppComponent {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 `AppConfig` が導入されたことで、これからコンフィグの中身が増えたとしても新たにプロバイダーやトークンを増やす必要はなくなりました。コンポーネントのコードも少なくなり、メンテナンス性の高いソースコードになりました。この実装パターンを **AppConfig パターン** と呼ぶことにしましょう。
 

@@ -130,8 +130,7 @@ export class SomeClass {
 
 このようなケースでは、次の例のように `userAgent` 引数もDIで解決できるように**別のプロバイダーを作る**べきです。そして `SomeClass` は他のサービスと同じようにクラスプロバイダーで提供します。
 
-{% code-tabs %}
-{% code-tabs-item title="providers/user-agent.ts" %}
+{% code title="providers/user-agent.ts" %}
 ```typescript
 import { InjectionToken } from '@angular/core';
 
@@ -140,11 +139,9 @@ export const USER_AGENT = new InjectionToken('userAgent', {
   factory: () => navigator.userAgent,
 });
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
-{% code-tabs %}
-{% code-tabs-item title="services/some-class.ts" %}
+{% code title="services/some-class.ts" %}
 ```typescript
 import { Injectable, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -155,13 +152,11 @@ export class SomeClass {
   constructor(httpClient: HttpClient, @Inject(USER_AGENT) userAgent: string) {}
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 Tree-shakableプロバイダーは NgModuleの `providers` 配列に同じトークンのプロバイダーを宣言することで簡単に上書きできます。上記の例でUserAgent文字列を変えたテストをする場合は次のように記述できます。
 
-{% code-tabs %}
-{% code-tabs-item title="services/some-class.spec.ts" %}
+{% code title="services/some-class.spec.ts" %}
 ```typescript
 describe('SomeClass', () => {
   beforeEach(() => {
@@ -179,8 +174,7 @@ describe('SomeClass', () => {
   });
 });
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ここまでの内容をまとめると、次の図のようになります。新しくプロバイダーを宣言するときに参考にしてください。
 

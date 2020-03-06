@@ -32,8 +32,7 @@ export class NoopInterceptor implements HttpInterceptor {
 
 この `NoopInterceptor` クラスを `HTTP_INTERCEPTORS` トークンに紐づけるproviderを宣言することで、HttpClientに対してインターセプターを登録できます。後述しますが、複数のインターセプターを登録する際にはprovideの順番によって実行順が決定します。そのため、providerの宣言は1つのファイルに集約することで安全に管理できます。
 
-{% code-tabs %}
-{% code-tabs-item title="http-interceptors.ts" %}
+{% code title="http-interceptors.ts" %}
 ```typescript
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 
@@ -45,11 +44,9 @@ export function provideHttpInterceptors() {
   ];
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
-{% code-tabs %}
-{% code-tabs-item title="app.module.ts \(抜粋\)" %}
+{% code title="app.module.ts \(抜粋\)" %}
 ```typescript
 import { provideHttpInterceptors } from './http-interceptors';
 
@@ -59,8 +56,7 @@ import { provideHttpInterceptors } from './http-interceptors';
 })
 export class AppModule {}
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 ## リクエストへの介入
 

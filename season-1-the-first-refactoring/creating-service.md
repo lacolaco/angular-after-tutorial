@@ -8,8 +8,7 @@ Angularの一般的なアプローチとして、コンポーネントからUI�
 
 まずはHTTP経由でユーザーの配列を取得する処理を、UserServiceに移譲しましょう。この処理をAppComponentから隠蔽することで、URLの変更やHTTPヘッダの追加のような原因でAppComponentが変更されることがなくなります。
 
-{% code-tabs %}
-{% code-tabs-item title="user.service.ts" %}
+{% code title="user.service.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -25,13 +24,11 @@ export class UserService {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 そしてAppComponentではUserServiceをインジェクトして `getUsers` メソッドを呼び出すだけとなります。
 
-{% code-tabs %}
-{% code-tabs-item title="app.component.ts" %}
+{% code title="app.component.ts" %}
 ```typescript
 import { Component } from '@angular/core';
 import { User } from './user';
@@ -56,8 +53,7 @@ export class AppComponent {
 }
 
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 AppComponentの責務がどんどん減ってきましたね。あともう少しです。
 
@@ -76,8 +72,7 @@ AppComponentの責務がどんどん減ってきましたね。あともう少�
 
 実際のユーザーの配列を保持するのは、RxJSの `BehaviorSubject` です。このSubjectは常にスナップショット可能な状態を保持できるため、シンプルな状態管理に最適です。ただしサービスの利用者には読み込み専用のObservableとしてのインターフェースだけを露出したいので、プライベートフィールドとgetterを使って実装します。
 
-{% code-tabs %}
-{% code-tabs-item title="user.service.ts" %}
+{% code title="user.service.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -103,13 +98,12 @@ export class UserService {
   }
 }
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endcode %}
 
 このサービスをAppComponentから利用すると次のようになります。注意すべきは、ユーザーの配列が同期的な配列からObservableに変わったので、テンプレート中でAsyncパイプを使って購読する点です。
 
-{% code-tabs %}
-{% code-tabs-item title="app.component.ts" %}
+{% tabs %}
+{% tab title="app.component.ts" %}
 ```typescript
 import { Component } from '@angular/core';
 import { UserService } from './service/user.service';
@@ -131,14 +125,14 @@ export class AppComponent {
 }
 
 ```
-{% endcode-tabs-item %}
+{% endtab %}
 
-{% code-tabs-item title="app.component.html" %}
+{% tab title="app.component.html" %}
 ```markup
 <user-list [users]="users | async"></user-list>
 ```
-{% endcode-tabs-item %}
-{% endcode-tabs %}
+{% endtab %}
+{% endtabs %}
 
 ついに、UIとライフサイクルに関わる責務以外はすべてAppComponentから分離できました。
 

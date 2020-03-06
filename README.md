@@ -8,7 +8,8 @@
 
 [チュートリアル](https://angular.jp/tutorial)
 
-この本についてのフィードバックは Twitter の [\#AngularAfterTutorial](https://twitter.com/search?q=%23AngularAfterTutorial) ハッシュタグを使ってください。
+この本についてのフィードバックは Twitter の [\#AngularAfterTutorial](https://twitter.com/search?q=%23AngularAfterTutorial) ハッシュタグを使ってください。  
+コンテンツのリクエストも歓迎です！
 
 ### 著者情報
 
