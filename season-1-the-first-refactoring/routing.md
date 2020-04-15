@@ -6,18 +6,16 @@
 
 ### User型の拡張
 
-ユーザー詳細ページを作るにあたって、まずは現在の `User` 型を拡張します。名前に加えて、メールアドレスと電話番号、会社名をもつようになります。
+ユーザー詳細ページを作るにあたって、まずは現在の `User` 型を拡張します。名前に加えて、メールアドレスとアバター画像をもつようになります。
 
 {% code title="user.ts" %}
 ```typescript
 export interface User {
   id: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  phone: string;
-  company: {
-    name: string;
-  }
+  avatar: string;
 }
 ```
 {% endcode %}
@@ -54,25 +52,36 @@ export const initialState = {
 
 {% code title="user-api.service.ts" %}
 ```typescript
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { User } from '../user';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { map } from "rxjs/operators";
+import { User } from "../user";
 
-const apiHost = 'https://jsonplaceholder.typicode.com';
+const apiHost = "https://reqres.in/api";
 
-@Injectable({ providedIn: 'root' })
+interface ApiResponse<T> {
+  data: T;
+}
+
+@Injectable({ providedIn: "root" })
 export class UserApiService {
-
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   async getAllUsers() {
-    return await this.http.get<User[]>(`${apiHost}/users`).toPromise();
+    return await this.http
+      .get<ApiResponse<User[]>>(`${apiHost}/users`)
+      .pipe(map(resp => resp.data))
+      .toPromise();
   }
 
   async getUserById(id: string) {
-    return await this.http.get<User>(`${apiHost}/users/${id}`).toPromise();
+    return await this.http
+      .get<ApiResponse<User>>(`${apiHost}/users/${id}`)
+      .pipe(map(resp => resp.data))
+      .toPromise()
   }
 }
+
 ```
 {% endcode %}
 
@@ -98,7 +107,7 @@ export class UserListUsecase {
       ...state,
       userList: {
         ...state.userList,
-        items: users,
+        items: users
       }
     }));
   }
@@ -192,7 +201,7 @@ export class UserDetailPageComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
-    this.onDestroy$.complete();
+    this.onDestroy$.next();
   }
 }
 ```
@@ -271,7 +280,6 @@ export class UserDetailPageComponent implements OnInit, OnDestroy {
 import { Injectable } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { Observable } from "rxjs";
-import { takeUntil, map, distinctUntilChanged } from "rxjs/operators";
 import { Store } from "../service/store.service";
 import { UserApiService } from "../service/user-api.service";
 import { User } from "../user";
@@ -295,16 +303,13 @@ export class UserDetailUsecase {
 
     const user = await this.userApi.getUserById(userId);
 
-    // delay for demo
-    setTimeout(() => {
-      this.store.update(state => ({
-        ...state,
-        userDetail: {
-          ...state.userDetail,
-          user
-        }
-      }));
-    }, 500);
+    this.store.update(state => ({
+      ...state,
+      userDetail: {
+        ...state.userDetail,
+        user
+      }
+    }));
   }
 }
 
@@ -346,7 +351,7 @@ export class UserDetailPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.onDestroy$.complete();
+    this.onDestroy$.next();
   }
 }
 ```
@@ -355,15 +360,14 @@ export class UserDetailPageComponent implements OnInit, OnDestroy {
 {% tab title="user-detail-page.component.html" %}
 ```markup
 <ng-container *ngIf="user$ | async as user; else userFetching">
-  <h1>{{user.name}}</h1>
+
+  <h1>{{user.first_name}} {{user.last_name}}</h1>
 
   <dl>
     <dt>Email</dt>
     <dd>{{ user.email }}</dd>
-    <dt>Phone</dt>
-    <dd>{{ user.phone }}</dd>
-     <dt>Company</dt>
-    <dd>{{ user.company.name }}</dd>
+    <dt>Avatar</dt>
+    <dd><img [src]="user.avatar"></dd>
   </dl>
 
 </ng-container>

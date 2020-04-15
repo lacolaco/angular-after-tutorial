@@ -6,9 +6,9 @@ description: この章では、ユーザーリストを表示する簡単なア�
 
 ## ユーザーリストの取得
 
-この章のサンプルアプリケーションでは、[JSONPlaceholder](https://jsonplaceholder.typicode.com/) のユーザーAPIで取得したユーザーを一覧して表示します。
+この章のサンプルアプリケーションでは、[https://reqres.in/](https://reqres.in/) のユーザーAPIで取得したユーザーを一覧して表示します。
 
-[https://jsonplaceholder.typicode.com/users](https://jsonplaceholder.typicode.com/users)
+[https://reqres.in/api/users](https://reqres.in/api/users) 
 
 ### AppComponent
 
@@ -18,7 +18,8 @@ description: この章では、ユーザーリストを表示する簡単なア�
 ```typescript
 export interface User {
   id: string;
-  name: string;
+  first_name: string;
+  last_name: string;
 }
 ```
 {% endcode %}
@@ -42,8 +43,8 @@ export class AppComponent {
   constructor(private http: HttpClient) { }
 
   ngOnInit() {
-    this.http.get<User[]>('https://jsonplaceholder.typicode.com/users').subscribe(data => {
-      this.users = data;
+    this.http.get<{ data: User[] }>('https://reqres.in/api/users').subscribe(resp => {
+      this.users = resp.data;
     });
   }
 }
@@ -55,7 +56,7 @@ export class AppComponent {
 ```markup
 <ul>
 	<li *ngFor="let user of users">
-		#{{ user.id }} {{ user.name }}
+		#{{ user.id }} {{ user.first_name }} {{ user.last_name }}
 	</li>
 </ul>
 ```

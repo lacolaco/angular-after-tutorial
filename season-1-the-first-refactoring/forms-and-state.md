@@ -10,7 +10,7 @@
 * テキストフィールドに入力された文字列を名前に含むユーザーだけをリストに表示する
 * フィルタリングはテキストフィールドの変更にリアルタイムに反応する
 
-これを実現するために、アプリケーションが管理する状態の型を次のように定義します。`userList.items` にはユーザーの配列を保持します。名前でフィルタリングするための文字列は `userListFilter.nameFilter` に保持します。
+これを実現するために、アプリケーションが管理する状態の型を次のように定義します。`userList.items` にはユーザーの配列を保持します。名前でフィルタリングするための文字列は `userList.filter.nameFilter` に保持します。
 
 {% code title="state.ts" %}
 ```typescript
@@ -21,13 +21,13 @@ export interface UserListFilter {
 export interface State {
   userList: {
     items: User[];
+    filter: UserListFilter;
   };
-  userListFilter: UserListFilter;
 }
 ```
 {% endcode %}
 
-今後文字列以外にも年齢や性別のような属性でフィルタリングをおこなうような変更に備えるため、フィルタリングに関する状態は `userListFilter` に、ユーザーリストを表示するためのデータは `userList` に集約しています。
+今後文字列以外にも年齢や性別のような属性でフィルタリングをおこなうような変更に備えるため、フィルタリングに関する状態は `userList.filter` に集約しています。
 
 この状態を管理するためのStoreサービスを作成します。これまでは `UserService` がユーザーに関するデータ取得、状態の管理という責務を集約していましたが、アプリケーション全体の状態の管理をおこなうためのサービスを作り、そこに既存の状態管理も移譲します。
 
@@ -38,10 +38,10 @@ export interface State {
 export const initialState = {
   userList: {
     items: [],
+    filter: {
+      nameFilter: '',
+    }
   },
-  userListFilter: {
-    nameFilter: '',
-  }
 };
 ```
 {% endcode %}
@@ -50,11 +50,19 @@ export const initialState = {
 
 状態管理をおこなうStoreサービスを作成します。状態を保持するための `BehaviorSubject` と、状態を更新するための `update` メソッド、そして状態を購読するための `select<T>` メソッドを実装しています。
 
+{% hint style="info" %}
+このサンプルではサードパーティライブラリに依存しないために独自にStoreを実装していますが、通常のアプリケーションでは ngrx/store や Akita のようなライブラリを使うことをおすすめします。
+{% endhint %}
+
+{% hint style="warning" %}
+`update`メソッドではRxJSの[`queueScheduler.schedule`](https://rxjs-dev.firebaseapp.com/api/index/const/queueScheduler) メソッドを使っています。これは引数に渡した関数を非同期的に実行するものです。同期的に`this._state$.next` を呼び出すとその更新が別の購読に即座に影響を与えるため、Angularの変更検知の整合性チェックでエラーが起きます。
+{% endhint %}
+
 {% code title="store.service.ts" %}
 ```typescript
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, queueScheduler } from 'rxjs';
+import { map, distinctUntilChanged } from 'rxjs/operators';
 import { State, initialState } from '../state';
 
 @Injectable({ providedIn: 'root' })
@@ -64,12 +72,15 @@ export class Store {
 
   update(fn: (state: State) => State) {
     const current = this._state$.value;
-    this._state$.next(fn(current));
+    queueScheduler.schedule(() => {
+      this._state$.next(fn(current));
+    });
   }
 
   select<T>(selector: (state: State) => T) {
     return this._state$.pipe(
-      map(selector)
+      map(selector),
+      distinctUntilChanged(),
     );
   }
 }
@@ -85,6 +96,7 @@ export class Store {
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject } from 'rxjs';
+import { map } from "rxjs/operators";
 import { Store } from './store.service';
 import { User } from '../user';
 
@@ -99,14 +111,15 @@ export class UserService {
 
   async fetchUsers() {
     const users = await this.http
-      .get<User[]>('https://jsonplaceholder.typicode.com/users')
+      .get<{ data: User[] }>("https://reqres.in/api/users")
+      .pipe(map(resp => resp.data))
       .toPromise();
 
     this.store.update(state => ({
       ...state,
       userList: {
         ...state.userList,
-        items: users,
+        items: users
       }
     }));
   }
@@ -120,38 +133,46 @@ export class UserService {
 
 {% code title="user-list.usecase.ts" %}
 ```typescript
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { Store } from '../service/store.service';
-import { User } from '../user';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { BehaviorSubject } from "rxjs";
+import { filter, map } from "rxjs/operators";
+import { Store } from "../service/store.service";
+import { User } from "../user";
 
 @Injectable({ providedIn: 'root' })
 export class UserListUsecase {
 
   get users$() {
-    return this.store.select(state =>
-      state.userList.items.filter(user => user.name.includes(state.userListFilter.nameFilter))
-    );
+    return this.store
+      // state.userListに変更があったときだけ後続のpipeが実行される
+      .select(state => state.userList)
+      .pipe(
+        map(({ items, filter }) =>
+          items.filter(user =>
+            (user.first_name + user.last_name).includes(filter.nameFilter)
+          )
+        )
+      );
   }
 
   get filter$() {
-    return this.store.select(state => state.userListFilter);
+    return this.store.select(state => state.userList.filter);
   }
 
   constructor(private http: HttpClient, private store: Store) { }
 
   async fetchUsers() {
     const users = await this.http
-      .get<User[]>('https://jsonplaceholder.typicode.com/users')
+      .get<{ data: User[] }>("https://reqres.in/api/users")
+      .pipe(map(resp => resp.data))
       .toPromise();
 
     this.store.update(state => ({
       ...state,
       userList: {
         ...state.userList,
-        items: users,
+        items: users
       }
     }));
   }
@@ -159,8 +180,11 @@ export class UserListUsecase {
   setNameFilter(nameFilter: string) {
     this.store.update(state => ({
       ...state,
-      userListFilter: {
-        nameFilter
+      userList: {
+        ...state.userList,
+        filter: {
+          nameFilter
+        }
       }
     }));
   }
@@ -174,6 +198,12 @@ export class UserListUsecase {
 
 {% hint style="warning" %}
 Reactive Formを使うためには、`AppModule`の `imports` メタデータに`ReactiveFormsModule` を追加する必要があります。
+{% endhint %}
+
+{% hint style="info" %}
+`setFormValue` メソッドでセットした値がまた `valueChanges` イベントを発火してしまわないように `emitEvent` フラグをオフにしています。指定しないと、Storeから渡された値がvalueChangesを発火し、それがまたStoreを更新するというループに陥ります。
+
+同じ値でStoreを更新してしまうのが原因なので、Storeを更新するまでの間のどこかで同値チェックができればこの問題は解決します。
 {% endhint %}
 
 {% tabs %}
@@ -192,7 +222,7 @@ Reactive Formを使うためには、`AppModule`の `imports` メタデータに
 
 {% tab title="user-list-filter.component.ts" %}
 ```typescript
-import { Component, Input, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { UserListFilter } from '../../state';
@@ -202,7 +232,7 @@ import { UserListFilter } from '../../state';
   templateUrl: './user-list-filter.component.html',
   styleUrls: ['./user-list-filter.component.css']
 })
-export class UserListFilterComponent implements OnDestroy {
+export class UserListFilterComponent implements OnDestroy, OnInit {
   @Input() set value(value: UserListFilter) {
     this.setFormValue(value);
   }
@@ -216,17 +246,20 @@ export class UserListFilterComponent implements OnDestroy {
     this.form = this.fb.group({
       nameFilter: ['']
     });
+  }
+
+  ngOnInit() {
     this.form.valueChanges.pipe(takeUntil(this.onDestroy)).subscribe(value => {
       this.valueChange.emit(value);
     });
   }
 
   ngOnDestroy() {
-    this.onDestroy.complete();
+    this.onDestroy.next();
   }
 
   private setFormValue(value: UserListFilter) {
-    this.form.setValue(value);
+    this.form.setValue(value, { emitEvent: false });
   }
 }
 ```

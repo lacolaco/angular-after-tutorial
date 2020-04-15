@@ -44,7 +44,7 @@ export class UserListItemComponent {
 
 {% tab title="user-list-item.component.html" %}
 ```markup
-#{{user.id}} {{user.name}}
+#{{ user.id }} {{ user.first_name }} {{ user.last_name }}
 ```
 {% endtab %}
 {% endtabs %}

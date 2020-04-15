@@ -12,6 +12,8 @@ Angularの一般的なアプローチとして、コンポーネントからUI�
 ```typescript
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { User } from '../user';
 
 @Injectable({ providedIn: 'root' })
@@ -19,10 +21,15 @@ export class UserService {
 
   constructor(private http: HttpClient) { }
 
-  getUsers() {
-    return this.http.get<User[]>('https://jsonplaceholder.typicode.com/users');
+  getUsers(): Observable<User[]> {
+    return this.http
+      .get<{ data: User[] }>("https://reqres.in/api/users")
+      .pipe(
+        map(resp => resp.data)
+      );
   }
 }
+
 ```
 {% endcode %}
 
@@ -74,24 +81,26 @@ AppComponentの責務がどんどん減ってきましたね。あともう少�
 
 {% code title="user.service.ts" %}
 ```typescript
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
-import { User } from '../user';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { BehaviorSubject } from "rxjs";
+import { User } from "../user";
+import { map } from "rxjs/operators";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class UserService {
-
   private _users$ = new BehaviorSubject<User[]>([]);
 
   get users$() {
     return this._users$.asObservable();
   }
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   fetchUsers(): void {
-    this.http.get<User[]>('https://jsonplaceholder.typicode.com/users')
+    this.http
+      .get<{ data: User[] }>("https://reqres.in/api/users")
+      .pipe(map(resp => resp.data))
       .subscribe(users => {
         this._users$.next(users);
       });

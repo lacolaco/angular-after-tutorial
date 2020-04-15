@@ -11,6 +11,10 @@
 この本についてのフィードバックは Twitter の [\#AngularAfterTutorial](https://twitter.com/search?q=%23AngularAfterTutorial) ハッシュタグを使ってください。  
 コンテンツのリクエストも歓迎です！
 
+### 更新状況
+
+* 2020/04/16: Season 1のサンプルコードをAngular v9系に合わせて更新
+
 ### 著者情報
 
 Suguru Inatomi / 稲富 駿   
