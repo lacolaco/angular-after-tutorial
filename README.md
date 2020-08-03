@@ -13,6 +13,7 @@
 
 ### 更新状況
 
+* 2020/08/03: Season 2の"コンポーネントにおけるObservableの購読"の内容をSingle State Streamパターンに更新
 * 2020/04/16: Season 1のサンプルコードをAngular v9系に合わせて更新
 
 ### 著者情報
@@ -22,7 +23,8 @@ Google Developers Expert for Angular
 Angular日本ユーザー会 代表
 
 Twitter: [@laco2net](https://twitter.com/laco2net)   
-Website:[ https://lacolaco.net/](https://lacolaco.net/)  
+Website:[ https://lacolaco.net/](https://lacolaco.net/)    
+Blog: [https://blog.lacolaco.net/](https://blog.lacolaco.net/)
 
 
 

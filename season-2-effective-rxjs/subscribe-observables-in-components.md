@@ -197,7 +197,7 @@ this.value$ = this.dataService.valueChanges.pipe(
 Asyncパイプは、コンポーネントの初期化時にフィールドとして存在する、無限なObservableにのみ使われるべきです。つまりユーザーインタラクションなどによって後から発生するHTTPリクエストのような有限のObservableは、Asyncパイプを使うのに適していません。
 {% endhint %}
 
-## ngIfによるテンプレートのブロック化
+## Single State Streamパターン
 
 Asyncパイプを使うときに注意するのは、同じObservableに複数回 Asyncパイプを適用してしまうことです。たとえば次のようなテンプレートを書いてしまうと、同じObservableを2度購読することになります。少しなら影響はありませんが、購読の数が増えるのはメモリ使用量が上昇し、本来不要な変更検知処理も実行されるので、パフォーマンスに悪影響があります。さらに、Asyncパイプの処理タイミングが別なので、2つのデータバインディングの解決が常に完全に同時であることは保証されません。
 
@@ -206,16 +206,19 @@ Asyncパイプを使うときに注意するのは、同じObservableに複数�
 <div>2. {{ value$ | async }}</div>
 ```
 
-これを解決するのが、`*ngIf` ディレクティブと Asyncパイプを使ったテンプレートのブロック化です。次のように、Asyncパイプと `*ngIf` の `as` 構文を使うことで、 `*ngIf` ディレクティブの内側で非同期的に更新される `value` を同期的に扱えるようになります。
+この問題を解決するのが、筆者が**Single State Streamパターン**と呼んでいる実装パターンです。テンプレートから参照するコンポーネントの状態を単一のストリームに合成し、Asyncパイプをテンプレートの先頭で1回だけ使うことで、その内側をあたかも同期的なテンプレートのように記述できます。
+
+{% embed url="https://blog.lacolaco.net/2019/07/angular-single-state-stream-pattern/" caption="" %}
 
 ```markup
-<ng-container *ngIf="{ value: value$ | async } as snapshot" >
-　　<div>1. {{ snapshot.value }}</div>
-　　<div>2. {{ snapshot.value }}</div>
+<ng-container *ngIf="state$ | async as state" >
+   <!-- 同期的に記述できる -->
+　　<div>1. {{ state.value }}</div>
+　　<div>2. {{ state.value }}</div>
 </ng-container>
 ```
 
-はじめは難しいテンプレートに感じるかもしれませんが、構成要素を順番に紐解いていくことで理解できるはずです。
+Single State Steamパターンを構成する重要な要素は **`ng-container` タグと `ngIf-as` 構文**です。まずはこれらを順番に紐解いていきましょう。
 
 ### ng-containerタグ
 
@@ -244,64 +247,47 @@ Asyncパイプを使うときに注意するのは、同じObservableに複数�
 </ng-template>
 ```
 
-### as-snapshotパターン
+### Single State Streamパターン
 
 値がnullだったときの表示は `else` 構文でカバーすることもできますが、テンプレートが肥大化しがちです。そもそもの原因は Observableがnullを流したときに `*ngIf` の評価結果が falseになってしまうことです。つまり、**常にtrueになるような評価式**にしておくことで `else` 構文を使わなくても常に同じテンプレートで Observableのデータを描画できます。
 
-その解決法が、 先ほどの **`{ value: value$ | async } as snapshot`** というテンプレート式です。この式でまず最初に評価されるのはパイプ部分なので、 `value$ | async` が評価されます。  
-次に、 `as` の左辺が評価されます。左辺はJavaScriptのオブジェクトリテラルの宣言なので、Asyncパイプの計算結果（ `value$` の最新の値）が、オブジェクトの `value` プロパティに代入されます。  
-最後に、`as snapshot` が評価され、左辺で宣言されたオブジェクトを  `snapshot` 変数に代入します。
+その解決法として、テンプレートが必要とする**状態を単一のストリーム**（Observable）に合成します。筆者はこのストリームを_**Single State Stream**_と呼んでいます。ストリームの合成にはRxJSの **`combineLatest` 関数**を利用します。はじめに合成されるストリームの型を `State` 型として定義し、コンポーネントが `state$: Observable<State>` フィールドを持つようにします。
 
-結果として、 `value$ | async` という式で得られていた値が、 `snapshot.value` という形でアクセスできるようになります。 `snapshot` は常にオブジェクトですから、 `*ngIf` の評価がfalseになることはありません。
+{% embed url="https://rxjs.dev/api/index/function/combineLatest" caption="combineLatest" %}
+
+{% code title="async-pipe.component.ts" %}
+```typescript
+import { combineLatest } from 'rxjs';
+
+type State = {
+  value: any;
+};
+
+@Component({})
+export class AsyncPipeComponent {
+  // Single State Stream
+  readonly state$: Observable<State>;
+
+  constructor(private dataService: DataService) {    
+    this.state$ = combineLatest(
+      [this.dataService.valueChanges], // 必要なストリームを合成する
+      ([value]) => ({ value }), // 配列からオブジェクトに変換する
+    );
+  }
+}
+```
+{% endcode %}
+
+ 今回の例では `valueChanges` にしか依存していませんが、複数のストリームをここで合成できます。`readonly` を付与しているため、この `state$` フィールドの値はコンストラクタ以外で変更されません。つまりコンポーネントのインスタンスが破棄されるまで同一のObservableオブジェクトを保持することを保証します。
+
+こうして作成したSingle State Streamを、テンプレートの先頭で`ng-container` タグの `ngIf-as` 構文を使って購読します。結果として、 `value$ | async` という式で得られていた値が、 `state.value` という形でアクセスできるようになります。 `state` は常に `State` 型のオブジェクトですから、 `*ngIf` の評価がfalseになることはありません。
 
 ```markup
-<ng-container *ngIf="{ value: value$ | async } as snapshot">
-　　<div>1. {{ snapshot.value }}</div>
-　　<div>2. {{ snapshot.value }}</div>
+<ng-container *ngIf="state$ | async as state">
+　　<div>1. {{ state.value }}</div>
+　　<div>2. {{ state.value }}</div>
 </ng-container>
 ```
 
-このようにAsyncパイプを内包したオブジェクトを `*ngIf` の `as` 構文で変数化するパターンを、本書では **as-snapshot パターン**と呼ぶことにします。nullやundefined、`0` や `""` のような `*ngIf` の評価結果がfalseになってしまう値を Asyncパイプで扱うときには、as-snapshotパターンを使うのが便利です。そうでない場合にも一貫性を持ってas-snapshotパターンに統一するとよいでしょう。
-
-### as-snapshotパターンの注意点
-
-as-snapshotパターンにも注意点はあります。それは、`snapshot` に**複数の無関係なAsyncパイプを内包させてはいけない**ということです。次の例を見てください。as-snapshotパターンの左辺で、 `foo` と `bar` の2つのプロパティにそれぞれ別のAsyncパイプが適用されています。
-
-```markup
-<ng-container *ngIf="{ foo: foo$ | async, bar: bar$ | async } as snapshot">
-　　<div>Foo: {{ snapshot.foo }}</div>
-　　<div>Bar: {{ snapshot.bar }}</div>
-</ng-container>
-```
-
-複数のObservableを1つのsnapshotで扱うのは合理的のように見えますが、実は問題点がありあます。このテンプレートでは `foo$` の更新によっても、`bar$` の更新によっても、どちらの場合も `*ngIf` の内部全体が再評価されることです。
-
-本来、 `foo$` の更新は `bar$` には影響していないはずなので、 `{{ snapshot.bar }}` は再評価する必要がないはずですが、ひとつのブロックとして `*ngIf` で囲ってしまうと、その内部は同じタイミングで評価されてしまいます。
-
-このような場合には、冗長ではありますがそれぞれのブロックで別々に Asyncパイプを使うべきです。 `<ng-container>` タグは描画後には消えるので、次のように書いたとしてもDOMとしては先ほどのテンプレートと同じように兄弟要素として描画されます。
-
-```markup
-<ng-container *ngIf="{ foo: foo$ | async } as snapshot">
-　　<div>Foo: {{ snapshot.foo }}</div>
-</ng-container>
-<ng-container *ngIf="{ bar: bar$ | async } as snapshot">
-　　<div>Bar: {{ snapshot.bar }}</div>
-</ng-container>
-```
-
-{% hint style="info" %}
-もし `foo$` と `bar$` が両方必要なテンプレートだった場合には 同じ `snapshot` にまとめることが合理的になるでしょう。しかしテンプレート式が複雑になるとメンテナンス性が下がるため、階層を作って対応することが好ましいです。
-
-```markup
-<ng-container *ngIf="{ foo: foo$ | async } as fooSnapshot">
-  <ng-container *ngIf="{ bar: bar$ | async } as barSnapshot">
-    <foo-bar-component 
-      [foo]="fooSnapshot.foo" 
-      [bar]="barSnapshot.bar"
-    ></foo-bar-component>
-  </ng-container>
-</ng-container>
-
-```
-{% endhint %}
+nullやundefined、`0` や `""` のような `*ngIf` の評価結果がfalseになってしまう値を Asyncパイプで扱うときには、Single State Streamパターンを使うのが便利です。そうでない場合にも、テンプレートでのAsyncパイプの使い方を統一できる利点もあり、ほとんどのコンポーネントに適用できる実用的な実装パターンです。
 
