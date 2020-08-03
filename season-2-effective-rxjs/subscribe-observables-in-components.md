@@ -197,7 +197,7 @@ this.value$ = this.dataService.valueChanges.pipe(
 Asyncパイプは、コンポーネントの初期化時にフィールドとして存在する、無限なObservableにのみ使われるべきです。つまりユーザーインタラクションなどによって後から発生するHTTPリクエストのような有限のObservableは、Asyncパイプを使うのに適していません。
 {% endhint %}
 
-## Single State Streamパターン
+## Single State Streamパターン <a id="single-state-stream-pattern"></a>
 
 Asyncパイプを使うときに注意するのは、同じObservableに複数回 Asyncパイプを適用してしまうことです。たとえば次のようなテンプレートを書いてしまうと、同じObservableを2度購読することになります。少しなら影響はありませんが、購読の数が増えるのはメモリ使用量が上昇し、本来不要な変更検知処理も実行されるので、パフォーマンスに悪影響があります。さらに、Asyncパイプの処理タイミングが別なので、2つのデータバインディングの解決が常に完全に同時であることは保証されません。
 
@@ -220,13 +220,13 @@ Asyncパイプを使うときに注意するのは、同じObservableに複数�
 
 Single State Steamパターンを構成する重要な要素は **`ng-container` タグと `ngIf-as` 構文**です。まずはこれらを順番に紐解いていきましょう。
 
-### ng-containerタグ
+### ng-containerタグ <a id="ng-container"></a>
 
 `<ng-container>` タグはAngularのテンプレート内でだけ使える特殊なタグです。このタグはテンプレート内で任意の範囲をブロック化するために使いますが、**実際にDOMへレンダリングされるときには除去されます**。
 
 `*ngIf` や `*ngFor` のような[構造ディレクティブ](https://angular.jp/guide/structural-directives#ng-container-to-the-rescue)を使うときに、テンプレート内の階層構造をうまく表現するためのタグとしてよく用いられる擬似的なタグです。
 
-### ngIf-as 構文
+### ngIf-as 構文 <a id="ngifas"></a>
 
 `*ngIf` の `as` 構文は、`*ngIf` に渡された式の評価結果を、テンプレート内で新しい変数に代入する機能です。同期的な `*ngIf` では使い所はありませんが、 Asyncパイプを併用すれば、Asyncパイプで得られた値が `*ngIf` に渡されるタイミングで、値を変数化できるのです。
 
@@ -247,7 +247,7 @@ Single State Steamパターンを構成する重要な要素は **`ng-container`
 </ng-template>
 ```
 
-### Single State Streamパターン
+### Single State Streamの合成 <a id="single-state-stream-composition"></a>
 
 値がnullだったときの表示は `else` 構文でカバーすることもできますが、テンプレートが肥大化しがちです。そもそもの原因は Observableがnullを流したときに `*ngIf` の評価結果が falseになってしまうことです。つまり、**常にtrueになるような評価式**にしておくことで `else` 構文を使わなくても常に同じテンプレートで Observableのデータを描画できます。
 
