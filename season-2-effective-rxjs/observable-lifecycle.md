@@ -6,7 +6,7 @@ description: RxJSのユースケースの前に、まず理解しておかなく
 
 ## 2種類のObservable
 
-Observableはいくつかの基準で、いくつかの種類に分類されることが多くあります。もっともよく分類される基準は、Hot / Coldでしょう。Hot Observableは、購読者の有無にかかわらずストリームが流れ続けますが、Cold Observableは購読者がいるときだけストリームを流します。このように、Observableという単純な型だけでは表現できない**振る舞いの違い**は、Observableを扱うときには常に意識する必要があります。
+Observableはいくつかの基準で、いくつかの種類に分類されることが多くあります。もっともよく分類される基準は、Hot / Coldでしょう。Hot Observableは、購読前から存在するストリームを購読しますが、Cold Observableは購読を始めることで新しいストリームを初期化します。このように、Observableという単純な型だけでは表現できない**振る舞いの違い**は、Observableを扱うときには常に意識する必要があります。
 
 {% hint style="info" %}
 RxJSのHot / Coldについての詳細は、RxJS開発チームの [Ben Lesh 氏によるブログ](https://medium.com/@benlesh/hot-vs-cold-observables-f8094ed53339)を参照してください。
