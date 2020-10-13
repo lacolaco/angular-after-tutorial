@@ -13,6 +13,7 @@
 
 ### 更新状況
 
+* 2020/10/12: [Zenn](https://zenn.dev/lacolaco/books/angular-after-tutorial)での公開へ移行。Gitbookでの更新は一旦停止
 * 2020/08/03: Season 2の"コンポーネントにおけるObservableの購読"の内容をSingle State Streamパターンに更新
 * 2020/04/16: Season 1のサンプルコードをAngular v9系に合わせて更新
 
